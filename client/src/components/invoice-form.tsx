@@ -291,11 +291,15 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
                         <SelectValue placeholder="Select Item" />
                       </SelectTrigger>
                       <SelectContent>
-                        {items.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.name} - ₹{parseFloat(item.unitPrice).toLocaleString()}
-                          </SelectItem>
-                        ))}
+                        {items.length === 0 ? (
+                          <div className="p-2 text-sm text-muted-foreground">No items found. Create items first.</div>
+                        ) : (
+                          items.map((item) => (
+                            <SelectItem key={item.id} value={item.id}>
+                              {item.name} - ₹{parseFloat(item.unitPrice.toString()).toLocaleString()}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
