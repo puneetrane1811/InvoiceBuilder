@@ -64,7 +64,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+    const id = crypto.randomUUID();
+    await db.insert(users).values({ ...insertUser, id });
+    const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
@@ -79,16 +81,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCustomer(customer: InsertCustomer): Promise<Customer> {
-    const [newCustomer] = await db.insert(customers).values(customer).returning();
+    const id = crypto.randomUUID();
+    await db.insert(customers).values({ ...customer, id });
+    const [newCustomer] = await db.select().from(customers).where(eq(customers.id, id));
     return newCustomer;
   }
 
   async updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer> {
-    const [updatedCustomer] = await db
+    await db
       .update(customers)
       .set(customer)
-      .where(eq(customers.id, id))
-      .returning();
+      .where(eq(customers.id, id));
+    
+    const [updatedCustomer] = await db.select().from(customers).where(eq(customers.id, id));
     return updatedCustomer;
   }
 
@@ -107,16 +112,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTax(tax: InsertTax): Promise<Tax> {
-    const [newTax] = await db.insert(taxes).values(tax).returning();
+    const id = crypto.randomUUID();
+    await db.insert(taxes).values({ ...tax, id });
+    const [newTax] = await db.select().from(taxes).where(eq(taxes.id, id));
     return newTax;
   }
 
   async updateTax(id: string, tax: Partial<InsertTax>): Promise<Tax> {
-    const [updatedTax] = await db
+    await db
       .update(taxes)
       .set(tax)
-      .where(eq(taxes.id, id))
-      .returning();
+      .where(eq(taxes.id, id));
+    
+    const [updatedTax] = await db.select().from(taxes).where(eq(taxes.id, id));
     return updatedTax;
   }
 
@@ -163,11 +171,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createItem(item: InsertItem, taxIds: string[]): Promise<Item> {
-    const [newItem] = await db.insert(items).values(item).returning();
+    const id = crypto.randomUUID();
+    await db.insert(items).values({ ...item, id });
+    const [newItem] = await db.select().from(items).where(eq(items.id, id));
     
     if (taxIds.length > 0) {
       const itemTaxData = taxIds.map(taxId => ({
-        itemId: newItem.id,
+        id: crypto.randomUUID(),
+        itemId: id,
         taxId
       }));
       await db.insert(itemTaxes).values(itemTaxData);
@@ -177,23 +188,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateItem(id: string, item: Partial<InsertItem>, taxIds: string[]): Promise<Item> {
-    const [updatedItem] = await db
+    await db
       .update(items)
       .set(item)
-      .where(eq(items.id, id))
-      .returning();
+      .where(eq(items.id, id));
 
     // Update item taxes
     await db.delete(itemTaxes).where(eq(itemTaxes.itemId, id));
     
     if (taxIds.length > 0) {
       const itemTaxData = taxIds.map(taxId => ({
+        id: crypto.randomUUID(),
         itemId: id,
         taxId
       }));
       await db.insert(itemTaxes).values(itemTaxData);
     }
     
+    const [updatedItem] = await db.select().from(items).where(eq(items.id, id));
     return updatedItem;
   }
 
@@ -267,12 +279,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createInvoice(invoice: InsertInvoice, lineItems: InsertInvoiceLineItem[]): Promise<Invoice> {
-    const [newInvoice] = await db.insert(invoices).values(invoice).returning();
+    const id = crypto.randomUUID();
+    await db.insert(invoices).values({ ...invoice, id });
+    const [newInvoice] = await db.select().from(invoices).where(eq(invoices.id, id));
     
     if (lineItems.length > 0) {
       const lineItemsWithInvoiceId = lineItems.map(item => ({
         ...item,
-        invoiceId: newInvoice.id
+        id: crypto.randomUUID(),
+        invoiceId: id
       }));
       await db.insert(invoiceLineItems).values(lineItemsWithInvoiceId);
     }
@@ -281,11 +296,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateInvoice(id: string, invoice: Partial<InsertInvoice>, lineItems: InsertInvoiceLineItem[]): Promise<Invoice> {
-    const [updatedInvoice] = await db
+    await db
       .update(invoices)
       .set(invoice)
-      .where(eq(invoices.id, id))
-      .returning();
+      .where(eq(invoices.id, id));
 
     // Update line items
     await db.delete(invoiceLineItems).where(eq(invoiceLineItems.invoiceId, id));
@@ -293,11 +307,13 @@ export class DatabaseStorage implements IStorage {
     if (lineItems.length > 0) {
       const lineItemsWithInvoiceId = lineItems.map(item => ({
         ...item,
+        id: crypto.randomUUID(),
         invoiceId: id
       }));
       await db.insert(invoiceLineItems).values(lineItemsWithInvoiceId);
     }
     
+    const [updatedInvoice] = await db.select().from(invoices).where(eq(invoices.id, id));
     return updatedInvoice;
   }
 
@@ -306,14 +322,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getInvoiceStats(): Promise<{ total: number; paid: number; pending: number; overdue: number }> {
-    const [stats] = await db
-      .select({
-        total: sql<number>`count(*)`,
-        paid: sql<number>`count(*) filter (where status = 'paid')`,
-        pending: sql<number>`count(*) filter (where status = 'pending')`,
-        overdue: sql<number>`count(*) filter (where status = 'overdue')`
-      })
-      .from(invoices);
+    const allInvoices = await db.select().from(invoices);
+    
+    const stats = {
+      total: allInvoices.length,
+      paid: allInvoices.filter(i => i.status === 'paid').length,
+      pending: allInvoices.filter(i => i.status === 'pending').length,
+      overdue: allInvoices.filter(i => i.status === 'overdue').length
+    };
 
     return stats;
   }
@@ -329,16 +345,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTemplate(template: InsertTemplate): Promise<Template> {
-    const [newTemplate] = await db.insert(templates).values(template).returning();
+    const id = crypto.randomUUID();
+    await db.insert(templates).values({ ...template, id });
+    const [newTemplate] = await db.select().from(templates).where(eq(templates.id, id));
     return newTemplate;
   }
 
   async updateTemplate(id: string, template: Partial<InsertTemplate>): Promise<Template> {
-    const [updatedTemplate] = await db
+    await db
       .update(templates)
       .set(template)
-      .where(eq(templates.id, id))
-      .returning();
+      .where(eq(templates.id, id));
+    
+    const [updatedTemplate] = await db.select().from(templates).where(eq(templates.id, id));
     return updatedTemplate;
   }
 

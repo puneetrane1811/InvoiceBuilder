@@ -1,74 +1,74 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
 });
 
-export const customers = pgTable("customers", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const customers = sqliteTable("customers", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   email: text("email"),
   phone: text("phone"),
   gstin: text("gstin"),
   billingAddress: text("billing_address"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const taxes = pgTable("taxes", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const taxes = sqliteTable("taxes", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
-  percentage: decimal("percentage", { precision: 5, scale: 2 }).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  percentage: real("percentage").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const items = pgTable("items", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const items = sqliteTable("items", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   description: text("description"),
-  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  unitPrice: real("unit_price").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const itemTaxes = pgTable("item_taxes", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  itemId: varchar("item_id").notNull().references(() => items.id, { onDelete: "cascade" }),
-  taxId: varchar("tax_id").notNull().references(() => taxes.id, { onDelete: "cascade" }),
+export const itemTaxes = sqliteTable("item_taxes", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  itemId: text("item_id").notNull().references(() => items.id, { onDelete: "cascade" }),
+  taxId: text("tax_id").notNull().references(() => taxes.id, { onDelete: "cascade" }),
 });
 
-export const invoices = pgTable("invoices", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const invoices = sqliteTable("invoices", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   invoiceNumber: text("invoice_number").notNull().unique(),
-  customerId: varchar("customer_id").notNull().references(() => customers.id),
-  issueDate: timestamp("issue_date").notNull(),
-  dueDate: timestamp("due_date"),
-  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
-  totalTax: decimal("total_tax", { precision: 10, scale: 2 }).notNull(),
-  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  customerId: text("customer_id").notNull().references(() => customers.id),
+  issueDate: integer("issue_date", { mode: "timestamp" }).notNull(),
+  dueDate: integer("due_date", { mode: "timestamp" }),
+  subtotal: real("subtotal").notNull(),
+  totalTax: real("total_tax").notNull(),
+  total: real("total").notNull(),
   status: text("status").notNull().default("pending"), // pending, paid, overdue
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const invoiceLineItems = pgTable("invoice_line_items", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  invoiceId: varchar("invoice_id").notNull().references(() => invoices.id, { onDelete: "cascade" }),
-  itemId: varchar("item_id").notNull().references(() => items.id),
+export const invoiceLineItems = sqliteTable("invoice_line_items", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  invoiceId: text("invoice_id").notNull().references(() => invoices.id, { onDelete: "cascade" }),
+  itemId: text("item_id").notNull().references(() => items.id),
   quantity: integer("quantity").notNull(),
-  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
-  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  unitPrice: real("unit_price").notNull(),
+  total: real("total").notNull(),
 });
 
-export const templates = pgTable("templates", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const templates = sqliteTable("templates", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   logoUrl: text("logo_url"),
   primaryColor: text("primary_color").default("#3b82f6"),
-  isDefault: boolean("is_default").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
+  isDefault: integer("is_default", { mode: "boolean" }).default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
 });
 
 // Relations
