@@ -288,13 +288,11 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
                       }}
                     >
                       <SelectTrigger data-testid={`select-item-${index}`}>
-                        <SelectValue placeholder="Select Item">
-                          {items.find(i => i.id === lineItem.itemId)?.name}
-                        </SelectValue>
+                        <SelectValue placeholder="Select Item" />
                       </SelectTrigger>
                       <SelectContent>
                         {items.length === 0 ? (
-                          <div className="p-2 text-sm text-muted-foreground">No items found. Create items first.</div>
+                          <SelectItem value="none" disabled>No items found</SelectItem>
                         ) : (
                           items.map((item) => (
                             <SelectItem key={item.id} value={item.id}>
