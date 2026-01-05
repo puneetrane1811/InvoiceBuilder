@@ -277,34 +277,26 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <div className="md:col-span-2">
                     <Label>Item</Label>
-                    <Select
-                      key={`${index}-${lineItem.itemId}`}
+                    <select
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       value={lineItem.itemId}
-                      onValueChange={(value) => {
+                      onChange={(e) => {
+                        const value = e.target.value;
                         updateLineItem(index, "itemId", value);
                         const item = items.find((i) => String(i.id) === String(value));
                         if (item) {
                           updateLineItem(index, "unitPrice", parseFloat(item.unitPrice.toString()));
                         }
                       }}
+                      data-testid={`select-item-${index}`}
                     >
-                      <SelectTrigger data-testid={`select-item-${index}`}>
-                        <SelectValue placeholder="Select Item">
-                          {items.find(i => String(i.id) === String(lineItem.itemId))?.name}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {items.length === 0 ? (
-                          <SelectItem value="none" disabled>No items found</SelectItem>
-                        ) : (
-                          items.map((item) => (
-                            <SelectItem key={item.id} value={String(item.id)}>
-                              {item.name} - ₹{parseFloat(item.unitPrice.toString()).toLocaleString()}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
+                      <option value="">Select Item</option>
+                      {items.map((item) => (
+                        <option key={item.id} value={String(item.id)}>
+                          {item.name} - ₹{parseFloat(item.unitPrice.toString()).toLocaleString()}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <Label>Quantity</Label>
