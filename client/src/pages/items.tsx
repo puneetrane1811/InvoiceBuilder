@@ -104,6 +104,7 @@ export default function Items() {
                     <TableHead>Description</TableHead>
                     <TableHead>Unit Price</TableHead>
                     <TableHead>Taxes</TableHead>
+                    <TableHead>Total Price</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -144,6 +145,16 @@ export default function Items() {
                               <span className="text-sm text-muted-foreground">No taxes</span>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <p className="text-sm font-semibold text-foreground">
+                            {(() => {
+                              const unitPrice = parseFloat(item.unitPrice.toString());
+                              const taxPercentage = item.taxes.reduce((sum, tax) => sum + parseFloat(tax.percentage.toString()), 0);
+                              const totalPrice = unitPrice * (1 + taxPercentage / 100);
+                              return formatCurrency(totalPrice.toString());
+                            })()}
+                          </p>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
