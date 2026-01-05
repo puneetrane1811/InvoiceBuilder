@@ -32,6 +32,7 @@ const invoiceFormSchema = z.object({
   issueDate: z.string().min(1, "Issue date is required"),
   dueDate: z.string().optional(),
   status: z.enum(["pending", "paid", "overdue"]).default("pending"),
+  discount: z.string().or(z.number()).optional(),
 });
 
 interface InvoiceFormProps {
@@ -59,6 +60,7 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
       issueDate: invoice?.issueDate ? new Date(invoice.issueDate).toISOString().split('T')[0] : "",
       dueDate: invoice?.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : "",
       status: (invoice?.status as "pending" | "paid" | "overdue") || "pending",
+      discount: invoice?.discount?.toString() || "0",
     },
   });
 
@@ -121,6 +123,7 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
   const calculateTotals = () => {
     let subtotal = 0;
     let totalTax = 0;
+    const discount = Number(form.watch("discount")) || 0;
 
     lineItems.forEach((lineItem) => {
       const item = items.find((i) => String(i.id) === String(lineItem.itemId));
@@ -141,7 +144,8 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
     return {
       subtotal,
       totalTax,
-      total: subtotal + totalTax,
+      discount,
+      total: Math.max(0, subtotal + totalTax - discount),
     };
   };
 
@@ -168,6 +172,7 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
       dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
       subtotal: totals.subtotal,
       totalTax: totals.totalTax,
+      discount: totals.discount,
       total: totals.total,
       lineItems: processedLineItems,
     };
@@ -353,6 +358,18 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Total Tax:</span>
               <span className="text-foreground font-medium">₹{totals.totalTax.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Discount:</span>
+              <div className="flex items-center space-x-2">
+                <span className="text-muted-foreground">₹</span>
+                <Input
+                  type="number"
+                  className="w-24 h-8 text-right"
+                  {...form.register("discount")}
+                  data-testid="input-invoice-discount"
+                />
+              </div>
             </div>
             <div className="border-t border-border pt-2">
               <div className="flex justify-between">
