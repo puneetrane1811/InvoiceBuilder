@@ -121,14 +121,14 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
     let totalTax = 0;
 
     lineItems.forEach((lineItem) => {
-      const item = items.find((i) => i.id === lineItem.itemId);
+      const item = items.find((i) => String(i.id) === String(lineItem.itemId));
       if (item) {
-        const lineTotal = lineItem.quantity * lineItem.unitPrice;
+        const lineTotal = Number(lineItem.quantity) * Number(lineItem.unitPrice);
         subtotal += lineTotal;
 
         // Calculate taxes for this line item
         item.taxes.forEach((tax) => {
-          totalTax += (lineTotal * parseFloat(tax.percentage)) / 100;
+          totalTax += (lineTotal * parseFloat(tax.percentage.toString())) / 100;
         });
       }
     });
@@ -278,24 +278,27 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
                   <div className="md:col-span-2">
                     <Label>Item</Label>
                     <Select
+                      key={`${index}-${lineItem.itemId}`}
                       value={lineItem.itemId}
                       onValueChange={(value) => {
                         updateLineItem(index, "itemId", value);
-                        const item = items.find((i) => i.id === value);
+                        const item = items.find((i) => String(i.id) === String(value));
                         if (item) {
                           updateLineItem(index, "unitPrice", parseFloat(item.unitPrice.toString()));
                         }
                       }}
                     >
                       <SelectTrigger data-testid={`select-item-${index}`}>
-                        <SelectValue placeholder="Select Item" />
+                        <SelectValue placeholder="Select Item">
+                          {items.find(i => String(i.id) === String(lineItem.itemId))?.name}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {items.length === 0 ? (
                           <SelectItem value="none" disabled>No items found</SelectItem>
                         ) : (
                           items.map((item) => (
-                            <SelectItem key={item.id} value={item.id}>
+                            <SelectItem key={item.id} value={String(item.id)}>
                               {item.name} - ₹{parseFloat(item.unitPrice.toString()).toLocaleString()}
                             </SelectItem>
                           ))
