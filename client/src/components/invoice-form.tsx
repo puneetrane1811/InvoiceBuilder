@@ -153,17 +153,17 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
       .map((item) => ({
         itemId: item.itemId,
         quantity: item.quantity,
-        unitPrice: item.unitPrice.toString(),
-        total: (item.quantity * item.unitPrice).toString(),
+        unitPrice: item.unitPrice,
+        total: item.quantity * item.unitPrice,
       }));
 
     const invoiceData = {
       ...data,
       issueDate: new Date(data.issueDate).toISOString(),
       dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
-      subtotal: totals.subtotal.toString(),
-      totalTax: totals.totalTax.toString(),
-      total: totals.total.toString(),
+      subtotal: totals.subtotal,
+      totalTax: totals.totalTax,
+      total: totals.total,
       lineItems: processedLineItems,
     };
 
