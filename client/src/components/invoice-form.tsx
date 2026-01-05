@@ -283,12 +283,14 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
                         updateLineItem(index, "itemId", value);
                         const item = items.find((i) => i.id === value);
                         if (item) {
-                          updateLineItem(index, "unitPrice", parseFloat(item.unitPrice));
+                          updateLineItem(index, "unitPrice", parseFloat(item.unitPrice.toString()));
                         }
                       }}
                     >
                       <SelectTrigger data-testid={`select-item-${index}`}>
-                        <SelectValue placeholder="Select Item" />
+                        <SelectValue placeholder="Select Item">
+                          {items.find(i => i.id === lineItem.itemId)?.name}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {items.length === 0 ? (
