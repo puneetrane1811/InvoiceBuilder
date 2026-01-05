@@ -140,6 +140,8 @@ export const insertItemSchema = createInsertSchema(items, {
 });
 
 export const insertInvoiceSchema = createInsertSchema(invoices, {
+  issueDate: z.coerce.date(),
+  dueDate: z.coerce.date().nullable(),
   subtotal: z.coerce.number(),
   totalTax: z.coerce.number(),
   total: z.coerce.number(),
