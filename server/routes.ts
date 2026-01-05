@@ -11,7 +11,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const customers = await storage.getCustomers();
       res.json(customers);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch customers" });
+      console.error("Failed to fetch customers:", error);
+      res.status(500).json({ message: "Failed to fetch customers", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -23,7 +24,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(customer);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch customer" });
+      console.error("Failed to fetch customer:", error);
+      res.status(500).json({ message: "Failed to fetch customer", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -33,10 +35,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const customer = await storage.createCustomer(customerData);
       res.status(201).json(customer);
     } catch (error) {
+      console.error("Failed to create customer:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid customer data", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to create customer" });
+      res.status(500).json({ message: "Failed to create customer", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
