@@ -125,22 +125,34 @@ export const insertCustomerSchema = createInsertSchema(customers).omit({
   createdAt: true,
 });
 
-export const insertTaxSchema = createInsertSchema(taxes).omit({
+export const insertTaxSchema = createInsertSchema(taxes, {
+  percentage: z.coerce.number(),
+}).omit({
   id: true,
   createdAt: true,
 });
 
-export const insertItemSchema = createInsertSchema(items).omit({
+export const insertItemSchema = createInsertSchema(items, {
+  unitPrice: z.coerce.number(),
+}).omit({
   id: true,
   createdAt: true,
 });
 
-export const insertInvoiceSchema = createInsertSchema(invoices).omit({
+export const insertInvoiceSchema = createInsertSchema(invoices, {
+  subtotal: z.coerce.number(),
+  totalTax: z.coerce.number(),
+  total: z.coerce.number(),
+}).omit({
   id: true,
   createdAt: true,
 });
 
-export const insertInvoiceLineItemSchema = createInsertSchema(invoiceLineItems).omit({
+export const insertInvoiceLineItemSchema = createInsertSchema(invoiceLineItems, {
+  unitPrice: z.coerce.number(),
+  total: z.coerce.number(),
+  quantity: z.coerce.number(),
+}).omit({
   id: true,
 });
 
