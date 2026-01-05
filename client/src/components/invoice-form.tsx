@@ -111,9 +111,11 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
   };
 
   const updateLineItem = (index: number, field: keyof LineItemForm, value: any) => {
-    const updated = [...lineItems];
-    updated[index] = { ...updated[index], [field]: value };
-    setLineItems(updated);
+    setLineItems(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
   };
 
   const calculateTotals = () => {
@@ -122,13 +124,16 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
 
     lineItems.forEach((lineItem) => {
       const item = items.find((i) => String(i.id) === String(lineItem.itemId));
-      if (item) {
-        const lineTotal = Number(lineItem.quantity) * Number(lineItem.unitPrice);
-        subtotal += lineTotal;
+      const quantity = Number(lineItem.quantity) || 0;
+      const unitPrice = Number(lineItem.unitPrice) || 0;
+      
+      const lineTotal = quantity * unitPrice;
+      subtotal += lineTotal;
 
+      if (item) {
         // Calculate taxes for this line item
         item.taxes.forEach((tax) => {
-          totalTax += (lineTotal * parseFloat(tax.percentage.toString())) / 100;
+          totalTax += (lineTotal * Number(tax.percentage)) / 100;
         });
       }
     });
