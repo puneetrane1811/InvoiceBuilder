@@ -281,14 +281,27 @@ export class DatabaseStorage implements IStorage {
 
   async createInvoice(invoice: InsertInvoice, lineItems: InsertInvoiceLineItem[]): Promise<Invoice> {
     const id = crypto.randomUUID();
-    await db.insert(invoices).values({ ...invoice, id });
+    // Ensure numeric fields are correctly handled
+    const processedInvoice = {
+      ...invoice,
+      id,
+      subtotal: Number(invoice.subtotal),
+      totalTax: Number(invoice.totalTax),
+      discount: Number(invoice.discount || 0),
+      total: Number(invoice.total)
+    };
+    
+    await db.insert(invoices).values(processedInvoice);
     const [newInvoice] = await db.select().from(invoices).where(eq(invoices.id, id));
     
     if (lineItems.length > 0) {
       const lineItemsWithInvoiceId = lineItems.map(item => ({
         ...item,
         id: crypto.randomUUID(),
-        invoiceId: id
+        invoiceId: id,
+        unitPrice: Number(item.unitPrice),
+        total: Number(item.total),
+        quantity: Number(item.quantity)
       }));
       await db.insert(invoiceLineItems).values(lineItemsWithInvoiceId);
     }
@@ -297,9 +310,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateInvoice(id: string, invoice: Partial<InsertInvoice>, lineItems: InsertInvoiceLineItem[]): Promise<Invoice> {
+    const updateData: any = { ...invoice };
+    if (updateData.subtotal !== undefined) updateData.subtotal = Number(updateData.subtotal);
+    if (updateData.totalTax !== undefined) updateData.totalTax = Number(updateData.totalTax);
+    if (updateData.discount !== undefined) updateData.discount = Number(updateData.discount);
+    if (updateData.total !== undefined) updateData.total = Number(updateData.total);
+
     await db
       .update(invoices)
-      .set(invoice)
+      .set(updateData)
       .where(eq(invoices.id, id));
 
     // Update line items
@@ -309,7 +328,10 @@ export class DatabaseStorage implements IStorage {
       const lineItemsWithInvoiceId = lineItems.map(item => ({
         ...item,
         id: crypto.randomUUID(),
-        invoiceId: id
+        invoiceId: id,
+        unitPrice: Number(item.unitPrice),
+        total: Number(item.total),
+        quantity: Number(item.quantity)
       }));
       await db.insert(invoiceLineItems).values(lineItemsWithInvoiceId);
     }
