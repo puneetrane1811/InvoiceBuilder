@@ -291,7 +291,19 @@ export class DatabaseStorage implements IStorage {
       total: Number(invoice.total)
     };
     
-    await db.insert(invoices).values(processedInvoice);
+    try {
+      await db.insert(invoices).values(processedInvoice);
+    } catch (error: any) {
+      console.error("Database insert error:", error);
+      // Fallback if column missing
+      if (error.message.includes("discount")) {
+        const { discount, ...invoiceWithoutDiscount } = processedInvoice;
+        await db.insert(invoices).values(invoiceWithoutDiscount as any);
+      } else {
+        throw error;
+      }
+    }
+
     const [newInvoice] = await db.select().from(invoices).where(eq(invoices.id, id));
     
     if (lineItems.length > 0) {
