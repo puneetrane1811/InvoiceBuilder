@@ -287,31 +287,10 @@ export class DatabaseStorage implements IStorage {
       id,
       subtotal: Number(invoice.subtotal),
       totalTax: Number(invoice.totalTax),
-      discount: Number(invoice.discount || 0),
       total: Number(invoice.total)
     };
     
-    try {
-      const { discount, ...invoiceWithoutDiscount } = processedInvoice;
-      await db.insert(invoices).values(processedInvoice);
-    } catch (error: any) {
-      console.error("Database insert error details:", {
-        message: error.message,
-        code: error.code,
-      });
-      // Fallback if column missing
-      const errorMessage = error.message || "";
-      if (errorMessage.toLowerCase().includes("discount")) {
-        console.log("Retrying insertion without discount column...");
-        const { discount, ...invoiceWithoutDiscount } = processedInvoice;
-        // Explicitly omit discount from the values to avoid any accidental inclusion
-        const cleanInvoice = { ...invoiceWithoutDiscount };
-        await db.insert(invoices).values(cleanInvoice as any);
-      } else {
-        throw error;
-      }
-    }
-
+    await db.insert(invoices).values(processedInvoice);
     const [newInvoice] = await db.select().from(invoices).where(eq(invoices.id, id));
     
     if (lineItems.length > 0) {
@@ -333,7 +312,6 @@ export class DatabaseStorage implements IStorage {
     const updateData: any = { ...invoice };
     if (updateData.subtotal !== undefined) updateData.subtotal = Number(updateData.subtotal);
     if (updateData.totalTax !== undefined) updateData.totalTax = Number(updateData.totalTax);
-    if (updateData.discount !== undefined) updateData.discount = Number(updateData.discount);
     if (updateData.total !== undefined) updateData.total = Number(updateData.total);
 
     await db

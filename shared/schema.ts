@@ -48,7 +48,6 @@ export const invoices = sqliteTable("invoices", {
   dueDate: integer("due_date", { mode: "timestamp" }),
   subtotal: real("subtotal").notNull(),
   totalTax: real("total_tax").notNull(),
-  discount: real("discount").default(0),
   total: real("total").notNull(),
   status: text("status").notNull().default("pending"), // pending, paid, overdue
   createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
@@ -145,7 +144,6 @@ export const insertInvoiceSchema = createInsertSchema(invoices, {
   dueDate: z.coerce.date().nullable(),
   subtotal: z.coerce.number(),
   totalTax: z.coerce.number(),
-  discount: z.coerce.number().optional(),
   total: z.coerce.number(),
 }).omit({
   id: true,

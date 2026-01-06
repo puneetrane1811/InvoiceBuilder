@@ -144,7 +144,6 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
     return {
       subtotal,
       totalTax,
-      discount,
       total: Math.max(0, subtotal + totalTax - discount),
     };
   };
@@ -172,7 +171,6 @@ export default function InvoiceForm({ invoice, onSuccess }: InvoiceFormProps) {
       dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
       subtotal: totals.subtotal,
       totalTax: totals.totalTax,
-      discount: totals.discount,
       total: totals.total,
       lineItems: processedLineItems,
     };
