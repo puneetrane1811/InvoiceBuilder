@@ -292,13 +292,21 @@ export class DatabaseStorage implements IStorage {
     };
     
     try {
+      const { discount, ...invoiceWithoutDiscount } = processedInvoice;
       await db.insert(invoices).values(processedInvoice);
     } catch (error: any) {
-      console.error("Database insert error:", error);
+      console.error("Database insert error details:", {
+        message: error.message,
+        code: error.code,
+      });
       // Fallback if column missing
-      if (error.message.includes("discount")) {
+      const errorMessage = error.message || "";
+      if (errorMessage.toLowerCase().includes("discount")) {
+        console.log("Retrying insertion without discount column...");
         const { discount, ...invoiceWithoutDiscount } = processedInvoice;
-        await db.insert(invoices).values(invoiceWithoutDiscount as any);
+        // Explicitly omit discount from the values to avoid any accidental inclusion
+        const cleanInvoice = { ...invoiceWithoutDiscount };
+        await db.insert(invoices).values(cleanInvoice as any);
       } else {
         throw error;
       }
